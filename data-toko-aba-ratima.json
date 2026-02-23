@@ -1,0 +1,75 @@
+{
+  "profil_toko": {
+    "nama": "Toko Aba Ratima",
+    "pemilik": "Aba Ratima",
+    "deskripsi": "Toko kelontong terlengkap dan termurah di lingkungan warga.",
+    "alamat": {
+      "jalan": "Jl. Sunan Gunungjati No. XX, RT XX/RW XX",
+      "desa": "Suranenggala Kidul",
+      "kecamatan": "Suranenggala",
+      "kabupaten": "Cirebon",
+      "provinsi": "Jawa Barat",
+      "patokan_lokasi": "Depan Masjid Al-Ikhlas, samping tukang cukur Asgar.",
+      "link_maps": "https://maps.google.com/?q=Toko_Aba_Ratima"
+    },
+    "kontak": {
+      "whatsapp_aba_ratima": "0812-XXXX-XXXX",
+      "telepon": "123-XXXXXXX"
+    }
+  },
+  "jam_operasional": {
+    "status_buka": "Buka",
+    "jadwal": {
+      "setiap_hari": "07.00 - 21.00 WIB",
+      "hari_libur_nasional": "Tetap Buka (Kecuali Idul Fitri-Adha)"
+    },
+    "catatan_istirahat": "Tutup sebentar dikarenakan sedang berbelanja ke pasar sekitar jam (07.00-09.00 WIB)"
+  },
+  "metode_pembayaran": {
+    "tunai": true,
+    "non_tunai": false
+  },
+  "pengiriman":{
+    "pengiriman_dari_toko": "Tidak melayani pengiriman ke alamat eksternal.",
+    "layanan_pengiriman": "Toko hanya melayani pengambilan barang di lokasi toko."
+  },
+  "kebijakan_toko": {
+    "retur_barang": "Mohon maaf, tidak menerima retur",
+    "kasbon": "Mohon maaf, tidak melayani kasbon/hutang."
+  },
+  "data_inventaris": {
+    "update_terakhir": "2025-02-17 07:00 WIB",
+    "kategori_barang": {
+      "sembako": [
+        { "id": "SMB-001", "nama": "Terigu Segitiga Biru", "varian": "Kemasan 1 kg", "harga": 14000, "stok": 20 }
+      ],
+      "mie_instan_makanan": [
+        { "id": "MIE-001", "nama": "Mie Sedaap Goreng", "varian": "Original (Kriuk)", "harga": 3500, "stok": 90 }
+      ],
+      "bumbu_dapur": [
+        { "id": "BMB-001", "nama": "Santan Kara", "varian": "Segitiga 65ml", "harga": 3500, "stok": 35 }
+      ],
+      "minuman_dan_susu": [
+        { "id": "SUS-001", "nama": "Susu Bendera (Frisian Flag)", "varian": "Kental Manis Putih (Kaleng)", "harga": 12500, "stok": 20 }
+      ],
+      "perlengkapan_mandi_dan_cuci": [
+        { "id": "SBN-001", "nama": "Sabun Detol", "varian": "Cair (120gr)", "harga": 15000, "stok": 25 },
+        { "id": "SBN-002", "nama": "Sabun Lifebuoy", "varian": "Batangan (120gr)", "harga": 5000, "stok": 25 },
+        { "id": "SBN-003", "nama": "Pepsodent", "varian": "Tube Sedang (120gr)", "harga": 12000, "stok": 25 }
+      ],
+      "rokok": [
+        { "id": "ROK-001", "nama": "Signature", "varian": "12 Batang satu bungkus", "harga": 26999, "stok": 25 }
+      ],
+      "gas_dan_galon": [
+        { "id": "GAS-001", "nama": "Gas LPG 3kg", "varian": "Tabung Melon (Isi Ulang)", "harga": 22000, "stok": 10 }
+      ],
+      "jajanan_snack": [
+        { "id": "SNK-001", "nama": "Beng-Beng", "varian": "Original", "harga": 3000, "stok": 50 }
+      ],
+      "obat_kesehatan": [
+        { "id": "MED-001", "nama": "Tolak Angin", "varian": "Cair (Sachet)", "harga": 5000, "stok": 40 },
+        { "id": "MED-002", "nama": "Komix", "varian": "Cair (Sachet)", "harga": 3000, "stok": 40 }
+      ]
+    }
+  }
+}
