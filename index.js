@@ -1,4 +1,5 @@
 // ? index.js
+import express from "express";
 import fs from 'fs';
 import { appendFile } from 'fs/promises'; 
 import qrcode from 'qrcode-terminal';
@@ -8,6 +9,11 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 
 // ? SETUP LOGGER
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+let TOKO_DATA_CONTEXT = "{}";
 const LOG_FILE = 'data-penelitian.csv';
 // ? Kode untuk membuat header kalau belum di buat headernya
 if (!fs.existsSync(LOG_FILE)) {
@@ -26,7 +32,6 @@ const logResearchDataAsync = async (question, answer, duration) => {
 };
 
 // IN-MEMORY JSON 
-let TOKO_DATA_CONTEXT = "{}";
 try {
     console.log("📂 Membaca Database Toko ke RAM...");
     if(fs.existsSync('data-toko-aba-ratima.json')) {

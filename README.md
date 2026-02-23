@@ -1,4 +1,4 @@
-# 🎓 wa-bot-aba-ratima
+# 🎓 wa-bot-aba-ratima-express
 
 **Prototipe Chatbot WhatsApp Pelayanan Informasi Stok Barang LLM (Zero Cost)**
 
@@ -34,8 +34,8 @@ Sebelum memulai, pastikan komputer Anda sudah terinstal:
 Buka terminal/CMD, lalu jalankan:
 
 ```bash
-git clone https://github.com/bajiff/wa-bot-aba-ratima.git
-cd wa-bot-aba-ratima
+git clone https://github.com/bajiff/wa-bot-aba-ratima-express.git
+cd wa-bot-aba-ratima-express
 ```
 
 ### 2. Install Dependencies
