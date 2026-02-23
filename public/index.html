@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Toko Aba Ratima</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light" style="display: none;" id="mainBody"> <nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">📦 Manajemen Stok - ABot</span>
+        <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">Tambah Barang Baru</div>
+        <div class="card-body">
+            <form id="formTambah" class="row g-3">
+                <div class="col-md-2"><input type="text" id="newId" class="form-control" placeholder="ID (misal: ROK-002)" required></div>
+                <div class="col-md-2"><input type="text" id="newKategori" class="form-control" placeholder="Kategori (misal: rokok)" required></div>
+                <div class="col-md-3"><input type="text" id="newNama" class="form-control" placeholder="Nama Barang" required></div>
+                <div class="col-md-2"><input type="text" id="newVarian" class="form-control" placeholder="Varian" required></div>
+                <div class="col-md-1"><input type="number" id="newHarga" class="form-control" placeholder="Harga" required></div>
+                <div class="col-md-1"><input type="number" id="newStok" class="form-control" placeholder="Stok" required></div>
+                <div class="col-md-1"><button type="submit" class="btn btn-success w-100">➕</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body overflow-auto">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Kategori</th>
+                        <th>Nama & Varian</th>
+                        <th>Harga (Rp)</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTable">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Cek Sesi Login Dulu
+    async function checkAuth() {
+        const response = await fetch('/api/check-session');
+        const data = await response.json();
+        if (!data.loggedIn) {
+            window.location.href = '/login.html';
+        } else {
+            document.getElementById('mainBody').style.display = 'block';
+            fetchInventory();
+        }
+    }
+
+    // 2. READ: Ambil Data
+    async function fetchInventory() {
+        const response = await fetch('/api/inventory');
+        if (response.status === 401) return window.location.href = '/login.html';
+        
+        const data = await response.json();
+        const tbody = document.getElementById('inventoryTable');
+        tbody.innerHTML = '';
+
+        data.forEach(item => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><small>${item.id}</small></td>
+                    <td><span class="badge bg-secondary">${item.kategori}</span></td>
+                    <td><strong>${item.nama}</strong> <br> <small class="text-muted">${item.varian}</small></td>
+                    <td style="width: 120px;"><input type="number" id="harga-${item.id}" class="form-control form-control-sm" value="${item.harga}"></td>
+                    <td style="width: 90px;"><input type="number" id="stok-${item.id}" class="form-control form-control-sm" value="${item.stok}"></td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="updateItem('${item.id}')">💾 Update</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 3. CREATE: Tambah Barang
+    document.getElementById('formTambah').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+            id: document.getElementById('newId').value,
+            kategori: document.getElementById('newKategori').value,
+            nama: document.getElementById('newNama').value,
+            varian: document.getElementById('newVarian').value,
+            harga: document.getElementById('newHarga').value,
+            stok: document.getElementById('newStok').value
+        };
+
+        const response = await fetch('/api/inventory', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        alert(result.message);
+        if(result.success) {
+            document.getElementById('formTambah').reset();
+            fetchInventory();
+        }
+    });
+
+    // 4. UPDATE: Simpan Perubahan
+    async function updateItem(id) {
+        const hargaBaru = document.getElementById(`harga-${id}`).value;
+        const stokBaru = document.getElementById(`stok-${id}`).value;
+
+        const response = await fetch(`/api/inventory/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ harga: hargaBaru, stok: stokBaru })
+        });
+
+        const result = await response.json();
+        if(result.success) alert('✅ Data & Bot diupdate!');
+    }
+
+    // 5. DELETE: Hapus Barang
+    async function deleteItem(id) {
+        if(!confirm(`Yakin ingin menghapus barang dengan ID ${id}?`)) return;
+
+        const response = await fetch(`/api/inventory/${id}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+        if(result.success) fetchInventory();
+    }
+
+    // 6. LOGOUT
+    async function logout() {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login.html';
+    }
+
+    // Jalankan cek auth saat halaman dibuka
+    checkAuth();
+</script>
+
+</body>
+</html>
