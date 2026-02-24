@@ -3,7 +3,7 @@ node_modules/
 npm-debug.log
 yarn-error.log
 trial/
-
+Laporan/
 # --- Environment Variables (RAHASIA) ---
 # Jangan pernah upload file ini karena ada API KEY!
 .env

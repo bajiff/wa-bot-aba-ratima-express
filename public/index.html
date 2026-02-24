@@ -6,7 +6,9 @@
     <title>Admin Toko Aba Ratima</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light" style="display: none;" id="mainBody"> <nav class="navbar navbar-dark bg-dark mb-4">
+<body class="bg-light" style="display: none;" id="mainBody"> 
+
+<nav class="navbar navbar-dark bg-dark mb-4">
     <div class="container">
         <span class="navbar-brand mb-0 h1">📦 Manajemen Stok - ABot</span>
         <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
@@ -14,19 +16,8 @@
 </nav>
 
 <div class="container">
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">Tambah Barang Baru</div>
-        <div class="card-body">
-            <form id="formTambah" class="row g-3">
-                <div class="col-md-2"><input type="text" id="newId" class="form-control" placeholder="ID (misal: ROK-002)" required></div>
-                <div class="col-md-2"><input type="text" id="newKategori" class="form-control" placeholder="Kategori (misal: rokok)" required></div>
-                <div class="col-md-3"><input type="text" id="newNama" class="form-control" placeholder="Nama Barang" required></div>
-                <div class="col-md-2"><input type="text" id="newVarian" class="form-control" placeholder="Varian" required></div>
-                <div class="col-md-1"><input type="number" id="newHarga" class="form-control" placeholder="Harga" required></div>
-                <div class="col-md-1"><input type="number" id="newStok" class="form-control" placeholder="Stok" required></div>
-                <div class="col-md-1"><button type="submit" class="btn btn-success w-100">➕</button></div>
-            </form>
-        </div>
+    <div class="mb-3 text-end">
+        <a href="/form-barang.html" class="btn btn-primary shadow-sm">➕ Tambah Barang Baru</a>
     </div>
 
     <div class="card shadow-sm">
@@ -76,11 +67,11 @@
                 <tr>
                     <td><small>${item.id}</small></td>
                     <td><span class="badge bg-secondary">${item.kategori}</span></td>
-                    <td><strong>${item.nama}</strong> <br> <small class="text-muted">${item.varian}</small></td>
-                    <td style="width: 120px;"><input type="number" id="harga-${item.id}" class="form-control form-control-sm" value="${item.harga}"></td>
-                    <td style="width: 90px;"><input type="number" id="stok-${item.id}" class="form-control form-control-sm" value="${item.stok}"></td>
+                    <td><strong>${item.nama}</strong> <br> <small class="text-muted">Satuan: ${item.varian}</small></td>
+                    <td>Rp ${item.harga.toLocaleString('id-ID')}</td>
+                    <td>${item.stok}</td>
                     <td>
-                        <button class="btn btn-warning btn-sm" onclick="updateItem('${item.id}')">💾 Update</button>
+                        <a href="/form-barang.html?id=${item.id}" class="btn btn-warning btn-sm">✏️ Edit</a>
                         <button class="btn btn-danger btn-sm" onclick="deleteItem('${item.id}')">🗑️</button>
                     </td>
                 </tr>
@@ -88,48 +79,7 @@
         });
     }
 
-    // 3. CREATE: Tambah Barang
-    document.getElementById('formTambah').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const payload = {
-            id: document.getElementById('newId').value,
-            kategori: document.getElementById('newKategori').value,
-            nama: document.getElementById('newNama').value,
-            varian: document.getElementById('newVarian').value,
-            harga: document.getElementById('newHarga').value,
-            stok: document.getElementById('newStok').value
-        };
-
-        const response = await fetch('/api/inventory', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const result = await response.json();
-        alert(result.message);
-        if(result.success) {
-            document.getElementById('formTambah').reset();
-            fetchInventory();
-        }
-    });
-
-    // 4. UPDATE: Simpan Perubahan
-    async function updateItem(id) {
-        const hargaBaru = document.getElementById(`harga-${id}`).value;
-        const stokBaru = document.getElementById(`stok-${id}`).value;
-
-        const response = await fetch(`/api/inventory/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ harga: hargaBaru, stok: stokBaru })
-        });
-
-        const result = await response.json();
-        if(result.success) alert('✅ Data & Bot diupdate!');
-    }
-
-    // 5. DELETE: Hapus Barang
+    // 3. DELETE: Hapus Barang
     async function deleteItem(id) {
         if(!confirm(`Yakin ingin menghapus barang dengan ID ${id}?`)) return;
 
@@ -138,10 +88,10 @@
         });
 
         const result = await response.json();
-        if(result.success) fetchInventory();
+        if(result.success) fetchInventory(); // Refresh tabel setelah hapus
     }
 
-    // 6. LOGOUT
+    // 4. LOGOUT
     async function logout() {
         await fetch('/api/logout', { method: 'POST' });
         window.location.href = '/login.html';

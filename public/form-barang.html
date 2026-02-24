@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Barang - ABot Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light" style="display: none;" id="mainBody">
+
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a href="/" class="navbar-brand mb-0 h1">⬅️ Kembali ke Data Stok</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white" id="formTitle">
+                    Tambah Barang Baru
+                </div>
+                <div class="card-body">
+                    <form id="barangForm">
+                        <input type="hidden" id="editId"> <div class="mb-3">
+                            <label class="form-label">Kategori Barang</label>
+                            <select id="kategori" class="form-select" required>
+                                <option value="" disabled selected>-- Pilih Kategori --</option>
+                                <option value="SMB|sembako">Sembako (SMB)</option>
+                                <option value="MIE|mie_instan_makanan">Mie Instan & Makanan (MIE)</option>
+                                <option value="BMB|bumbu_dapur">Bumbu Dapur (BMB)</option>
+                                <option value="SUS|minuman_dan_susu">Minuman & Susu (SUS)</option>
+                                <option value="SBN|perlengkapan_mandi_dan_cuci">Perlengkapan Mandi/Cuci (SBN)</option>
+                                <option value="ROK|rokok">Rokok (ROK)</option>
+                                <option value="GAS|gas_dan_galon">Gas & Galon (GAS)</option>
+                                <option value="SNK|jajanan_snack">Jajanan & Snack (SNK)</option>
+                                <option value="MED|obat_kesehatan">Obat & Kesehatan (MED)</option>
+                            </select>
+                            <small class="text-danger" id="kategoriHelp" style="display: none;">*Kategori tidak bisa diubah saat mode Edit agar ID tetap valid.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nama Barang</label>
+                            <input type="text" id="nama" class="form-control" placeholder="Contoh: Terigu Segitiga Biru" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Satuan</label>
+                            <select id="satuan" class="form-select" required>
+                                <option value="" disabled selected>-- Pilih Satuan --</option>
+                                <optgroup label="Satuan Kuantitas (Jumlah)">
+                                    <option value="Pcs">Pcs</option>
+                                    <option value="Renteng">Renteng (10 Pcs)</option>
+                                    <option value="Lusin">Lusin (12 Pcs)</option>
+                                    <option value="Gross">Gross (144 Pcs)</option>
+                                    <option value="Rim">Rim (500 Lembar)</option>
+                                    <option value="Pack">Pack (Dus/Kemasan)</option>
+                                </optgroup>
+                                <optgroup label="Satuan Berat (Timbangan)">
+                                    <option value="Kilogram (kg)">Kilogram (kg)</option>
+                                    <option value="Gram (g)">Gram (g)</option>
+                                    <option value="Ons">Ons</option>
+                                </optgroup>
+                                <optgroup label="Satuan Ukuran/Volume">
+                                    <option value="Meter (m)">Meter (m)</option>
+                                    <option value="Sentimeter (cm)">Sentimeter (cm)</option>
+                                    <option value="Liter (L)">Liter (L)</option>
+                                    <option value="Mililiter (ml)">Mililiter (ml)</option>
+                                    <option value="Set/Pasang">Set/Pasang</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Harga Jual (Rp)</label>
+                                <input type="number" id="harga" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Stok Saat Ini</label>
+                                <input type="number" id="stok" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 mt-3" id="btnSubmit">💾 Simpan Barang</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Cek Sesi (Keamanan)
+    async function checkAuth() {
+        const res = await fetch('/api/check-session');
+        const data = await res.json();
+        if (!data.loggedIn) window.location.href = '/login.html';
+        else {
+            document.getElementById('mainBody').style.display = 'block';
+            checkMode(); // Cek apakah mode tambah atau edit
+        }
+    }
+
+    // 2. Cek Mode Tambah / Edit dari URL
+    async function checkMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('id');
+
+        if (editId) {
+            // MODE EDIT
+            document.getElementById('formTitle').innerText = `✏️ Edit Barang (${editId})`;
+            document.getElementById('btnSubmit').innerText = "💾 Update Barang";
+            document.getElementById('editId').value = editId;
+            
+            // Kunci kategori karena ID sudah menempel dengan kategori
+            document.getElementById('kategori').disabled = true;
+            document.getElementById('kategoriHelp').style.display = 'block';
+
+            // Ambil data barang yang mau diedit
+            const res = await fetch('/api/inventory');
+            const items = await res.json();
+            const item = items.find(i => i.id === editId);
+
+            if (item) {
+                // Set nilai Dropdown Kategori secara manual
+                const kodeHuruf = item.id.split('-')[0]; // "SMB"
+                document.getElementById('kategori').value = `${kodeHuruf}|${item.kategori}`;
+                
+                document.getElementById('nama').value = item.nama;
+                document.getElementById('satuan').value = item.varian;
+                document.getElementById('harga').value = item.harga;
+                document.getElementById('stok').value = item.stok;
+            }
+        }
+    }
+
+    // 3. Proses Submit Data
+    document.getElementById('barangForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const editId = document.getElementById('editId').value;
+        const katValue = document.getElementById('kategori').value.split('|'); // Memecah "SMB|sembako"
+        
+        const payload = {
+            kategori_kode: katValue[0],
+            kategori_nama: katValue[1],
+            nama: document.getElementById('nama').value,
+            satuan: document.getElementById('satuan').value,
+            harga: parseInt(document.getElementById('harga').value),
+            stok: parseInt(document.getElementById('stok').value)
+        };
+
+        let url = '/api/inventory';
+        let method = 'POST'; // Default ke Tambah Baru
+
+        if (editId) {
+            url = `/api/inventory/${editId}`;
+            method = 'PUT'; // Ubah jadi Update jika ada ID
+        }
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        alert(result.message);
+        
+        if (result.success) {
+            window.location.href = '/'; // Kembali ke halaman utama jika sukses
+        }
+    });
+
+    checkAuth();
+</script>
+</body>
+</html>

@@ -31,6 +31,25 @@ let db;
 let model; 
 const chatSessions = new Map(); 
 
+// Buat header otomatis jika file belum ada
+if (!fs.existsSync(LOG_FILE)) {
+    fs.writeFileSync(LOG_FILE, 'Timestamp,Pertanyaan,Jawaban,Waktu_Proses_ms,Ukuran_Pesan_User_KB,Ukuran_Balasan_KB\n');
+}
+
+// Fungsi untuk mencatat log secara asynchronous
+const logResearchDataAsync = async (question, answer, duration) => {
+    const kbUser = (Buffer.byteLength(question || '', 'utf8') / 1024).toFixed(3);
+    const kbBot = (Buffer.byteLength(answer || '', 'utf8') / 1024).toFixed(3);
+    
+    // Hilangkan koma dan enter agar format CSV tidak rusak
+    const cleanQ = question ? question.replace(/[\n,"]/g, ' ') : ''; 
+    const cleanA = answer ? answer.replace(/[\n,"]/g, ' ') : '';
+    
+    const time = new Date().toISOString();
+    
+    const row = `${time},"${cleanQ}","${cleanA}",${duration},${kbUser},${kbBot}\n`;
+    await appendFile(LOG_FILE, row);
+};
 // --- FUNGSI DYNAMIC UPDATE AI ---
 async function updateGeminiModel() {
     console.log("🔄 Mengambil data terbaru dari SQLite untuk memori Bot...");
@@ -90,7 +109,7 @@ async function updateGeminiModel() {
         `;
 
     model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash", 
+        model: "gemini-3-flash-preview", 
         systemInstruction: SYSTEM_INSTRUCTION,
         generationConfig: { temperature: 0.3 }
     });
@@ -141,28 +160,51 @@ app.get('/api/inventory', checkAuth, async (req, res) => {
     res.json(data);
 });
 
-// CREATE
+// CREATE (Dengan Auto-Generate ID & Satuan)
 app.post('/api/inventory', checkAuth, async (req, res) => {
-    const { id, kategori, nama, varian, harga, stok } = req.body;
+    // Catatan: 'satuan' akan kita simpan di kolom 'varian' pada database agar tidak perlu ubah struktur tabel
+    const { kategori_kode, kategori_nama, nama, satuan, harga, stok } = req.body;
+    
     try {
+        // 1. Cari ID terakhir yang menggunakan kode kategori ini (misal: "SMB-%")
+        const lastItem = await db.get(
+            'SELECT id FROM inventory WHERE id LIKE ? ORDER BY id DESC LIMIT 1', 
+            [`${kategori_kode}-%`]
+        );
+
+        let newId = `${kategori_kode}-001`; // Default jika belum ada barang di kategori ini
+
+        // 2. Jika sudah ada, ambil angkanya, tambah 1, lalu format ulang jadi 3 digit
+        if (lastItem) {
+            const lastNumber = parseInt(lastItem.id.split('-')[1]);
+            const nextNumber = (lastNumber + 1).toString().padStart(3, '0');
+            newId = `${kategori_kode}-${nextNumber}`;
+        }
+
+        // 3. Masukkan ke database
         await db.run(
             'INSERT INTO inventory (id, kategori, nama, varian, harga, stok) VALUES (?, ?, ?, ?, ?, ?)',
-            [id, kategori, nama, varian, harga, stok]
+            [newId, kategori_nama, nama, satuan, harga, stok]
         );
+        
         await updateGeminiModel();
-        res.json({ success: true, message: "Barang berhasil ditambahkan!" });
+        res.json({ success: true, message: `Barang berhasil ditambahkan dengan ID: ${newId}` });
     } catch (error) {
-        res.status(500).json({ success: false, message: "ID Barang mungkin sudah ada." });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// UPDATE
+// UPDATE (Sekarang bisa update Nama dan Satuan juga)
 app.put('/api/inventory/:id', checkAuth, async (req, res) => {
-    const { harga, stok } = req.body;
+    const { nama, satuan, harga, stok } = req.body;
     const { id } = req.params;
+    
     try {
-        await db.run('UPDATE inventory SET harga = ?, stok = ? WHERE id = ?', [harga, stok, id]);
-        await updateGeminiModel();
+        await db.run(
+            'UPDATE inventory SET nama = ?, varian = ?, harga = ?, stok = ? WHERE id = ?', 
+            [nama, satuan, harga, stok, id]
+        );
+        await updateGeminiModel(); // Restart otak AI!
         res.json({ success: true, message: "Data berhasil diupdate!" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -190,19 +232,45 @@ const client = new Client({
 client.on('qr', (qr) => qrcode.generate(qr, { small: true }));
 client.on('ready', () => console.log('[INFO] Bot WA Siap Melayani!'));
 
+client.on('disconnected', async (reason) => {
+    console.log('⚠️ Koneksi WA terputus:', reason);
+    const sessionPath = './.wwebjs_auth';
+    if (fs.existsSync(sessionPath)) fs.rmSync(sessionPath, { recursive: true, force: true });
+    process.exit();
+});
+
 client.on('message', async msg => {
     if (msg.body === 'status@broadcast' || msg.from.includes('@g.us')) return;
 
     try {
+        const startTime = Date.now(); // Mulai stopwatch
+        console.log(`[USER] ${msg.from}: ${msg.body}`);
+
         if (!chatSessions.has(msg.from)) {
             chatSessions.set(msg.from, model.startChat({ history: [] }));
         }
         
         const chat = chatSessions.get(msg.from);
         const result = await chat.sendMessage(msg.body);
-        await msg.reply(result.response.text());
+        let text = "";
+      
+        try {
+             text = result.response.text();
+        } catch (e) {
+             text = "🤖 Mohon maaf, saya tidak bisa memproses pertanyaan tersebut karena alasan keamanan sistem.";
+        }
+
+        await msg.reply(text);
+
+        const endTime = Date.now(); // Hentikan stopwatch
+        const duration = endTime - startTime; // Hitung durasi
+
+        // Simpan data ke CSV
+        await logResearchDataAsync(msg.body, text, duration);
+        console.log(`[BOT] Terkirim ke ${msg.from} (${duration}ms)`);
+
     } catch (error) {
-        console.error(error);
+        console.error('[ERROR SYSTEM]', error);
     }
 });
 
