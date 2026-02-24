@@ -64,7 +64,9 @@ async function updateGeminiModel() {
     }, {});
 
     const TOKO_DATA_CONTEXT = JSON.stringify({
-        profil_toko: { nama: "Toko Aba Ratima", pemilik: "Aba Ratima" },
+        profil_toko: {
+                nama: "Toko Aba Ratima",pemilik: "Aba Ratima",deskripsi: "Toko kelontong terlengkap dan termurah di lingkungan warga.",kebijakan: "Tidak boleh utang",jam_buka: "07.00-21.00 WIB kadang tutup sebentar untuk berbelanja", transaksi:"Cash Only belum melayani Non-Tunai",retur:"Retur dilayani maksimal 24 jam setelah barang diterima",refund: "Tidak Menyediakan Refund" 
+            },
         data_inventaris: { kategori_barang: inventoryTerbaru }
     }, null, 2);
 
@@ -109,7 +111,7 @@ async function updateGeminiModel() {
         `;
 
     model = genAI.getGenerativeModel({ 
-        model: "gemini-3-flash-preview", 
+        model: "gemini-flash-lite-latest", 
         systemInstruction: SYSTEM_INSTRUCTION,
         generationConfig: { temperature: 0.3 }
     });
